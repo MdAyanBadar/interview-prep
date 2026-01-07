@@ -1,3 +1,4 @@
+// ✅ Question Controller - Handles creating and fetching questions
 const Question = require("../models/Question");
 
 exports.createQuestion = async (req, res) => {

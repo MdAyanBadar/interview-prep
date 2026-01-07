@@ -1,3 +1,4 @@
+// ✅ Report Routes - Handles generating reports and analytics
 const express = require("express");
 const auth = require("../middleware/auth");
 const {

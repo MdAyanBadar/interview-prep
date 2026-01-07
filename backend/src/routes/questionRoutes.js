@@ -1,3 +1,4 @@
+// ✅ Question Routes - Handles creating and fetching questions
 const express = require("express");
 const auth = require("../middleware/auth");
 const role = require("../middleware/role");

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getBookmarks } from "../api/bookmarks";
 import { useNavigate } from "react-router-dom";
+import PageLoader from "../components/PageLoader";
 
 export default function Bookmarks() {
   const [bookmarks, setBookmarks] = useState([]);
@@ -55,20 +56,7 @@ export default function Bookmarks() {
   /* ---------- Empty ---------- */
   if (!bookmarks.length) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center p-6">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-          No Bookmarks Yet ⭐
-        </h2>
-        <p className="text-gray-500 mb-6">
-          Bookmark questions during practice to review them later.
-        </p>
-        <button
-          onClick={() => navigate("/practice/start")}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold"
-        >
-          Start Practicing
-        </button>
-      </div>
+      <PageLoader loadingKey="bookmarks"/>
     );
   }
 

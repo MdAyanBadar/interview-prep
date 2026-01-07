@@ -1,3 +1,4 @@
+// ✅ Bookmark Controller - Handles bookmarking questions
 const Bookmark = require("../models/Bookmark");
 
 // ADD BOOKMARK

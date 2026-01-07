@@ -1,3 +1,4 @@
+// ✅ Auth Routes - Handles user registration and login
 console.log("AUTH ROUTES LOADED");
 const express = require("express");
 const {

@@ -1,3 +1,4 @@
+// ✅ Role Middleware - Checks if user has required role
 /**
  * Role-based access control middleware
  * @param {string} role - allowed role (e.g. "admin")

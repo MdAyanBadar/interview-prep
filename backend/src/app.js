@@ -13,7 +13,7 @@ const app = express();
 // This allows your specific Vercel URL and local testing
 const allowedOrigins = [
   "https://interview-prep-b9m7.vercel.app",
-  "http://localhost:5173", // Vite default
+  "http://localhost:5175", // Vite default
   "http://localhost:3000"  // Create React App default
 ];
 
