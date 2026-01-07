@@ -1,75 +1,67 @@
-# 🚀 Interview Preparation Platform
 
-A **full-stack interview preparation platform** that allows users to practice technical questions, track performance analytics, bookmark important questions, and identify weak areas — built with **real-world backend architecture and modern frontend UI**.
+# 🚀 AI-Powered Interview Preparation Platform
 
-This project is designed as a **portfolio-grade system**, not a demo app.
-
----
-
-## 📌 Features
-
-### 👤 Authentication & Authorization
-
-* User registration & login (JWT based)
-* Protected routes using middleware
-* Role-based access (Admin / User)
-
-### 🧠 Practice Sessions
-
-* Start timed practice sessions
-* Randomized question selection
-* Topic & difficulty filtering
-* Submit answers for evaluation
-
-### 🔑 Smart Evaluation
-
-* **Keyword-based answer evaluation**
-* Partial correctness support
-* Topic-wise accuracy calculation
-
-### 📊 Dashboard & Analytics
-
-* Total sessions & questions attempted
-* Overall accuracy percentage
-* Topic-wise performance breakdown
-* Weak topic detection
-* Strongest topic highlight
-* Progress bars & visual indicators
-
-### ⭐ Bookmarks
-
-* Bookmark important questions
-* Review bookmarked questions anytime
-* Prevent duplicate bookmarks
-
-### 🛠 Admin Features
-
-* Create & manage interview questions
-* Define keywords for evaluation
-* Set difficulty & topic
+A **high-fidelity interview simulation system** that leverages **Google Gemini 1.5 Pro/Flash** to provide deep, subjective evaluation of technical answers. It combines instant MCQ grading with advanced AI feedback to help developers master technical interviews.
 
 ---
 
-## 🧱 Tech Stack
+## 📌 Updated Key Features
+
+### 🧠 Hybrid Practice Sessions
+
+* **Mixed Mode:** Practice sessions now dynamically pull a 50/50 mix of Multiple Choice (MCQ) and Short Answer questions.
+* **Topic & Difficulty Filtering:** Targeted practice for specific domains (React, Node.js, System Design).
+
+### 🔑 Dual-Engine Evaluation
+
+* **Local Engine:** Instant validation for MCQs with detailed explanations.
+* **AI Engine (Gemini):** Short-answer questions are sent to Google Gemini for subjective analysis, scoring, and constructive feedback.
+* **Intelligent JSON Parsing:** Backend logic to clean AI responses and handle rate limiting (429 errors) gracefully.
+
+### 📊 Advanced Analytics & UX
+
+* **Dynamic Page Loaders:** Context-aware loading screens ("Syncing Dashboard", "Fetching Bookmarks") to eliminate perceived latency.
+* **AI Loading Overlay:** A specialized glassmorphism loader that keeps users engaged while Gemini processes complex answers.
+* **Comprehensive Results:** Side-by-side comparison of user answers, correct answers, and AI-generated improvement tips.
+
+---
+
+## 🧱 Updated Tech Stack
 
 ### Backend
 
-* **Node.js**
-* **Express.js**
-* **MongoDB** (Mongoose)
-* **JWT Authentication**
-* RESTful API design
+* **Node.js & Express.js**
+* **MongoDB (Mongoose):** Using `$sample` aggregation for randomized, balanced question sets.
+* **Google Generative AI SDK:** Integration with `gemini-1.5-flash`.
+* **JWT & Middleware:** Secure session handling and admin-only question management.
 
 ### Frontend
 
-* **React.js**
-* **React Router**
-* **Tailwind CSS**
-* Axios for API communication
+* **React.js (Vite)**
+* **Tailwind CSS:** Modern UI with Backdrop-blur and custom animations.
+* **Lucide React:** Premium iconography for better visual hierarchy.
+* **Axios:** Managed API requests with custom interceptors for loading states.
 
 ---
 
-## 📂 Project Structure
+## 📂 New Architecture Highlights
+
+### AI Evaluation Logic
+
+The backend no longer just counts keywords. It sends the question context, expected keywords, and user response to the LLM:
+
+```javascript
+// Example Prompt Structure
+{
+  "role": "technical_interviewer",
+  "task": "Evaluate the answer based on technical depth, keyword presence, and clarity."
+}
+
+```
+
+---
+
+## 📂 Updated Project Structure
 
 ### Backend
 
@@ -77,11 +69,12 @@ This project is designed as a **portfolio-grade system**, not a demo app.
 backend/
  └─ src/
     ├─ controllers/
-    ├─ routes/
+    │  └─ sessionController.js (Logic for MCQ vs AI grading)
     ├─ models/
-    ├─ middleware/
-    ├─ app.js
-    └─ server.js
+    │  └─ Question.js (Supports 'type': 'mcq' | 'short-answer')
+    └─ utils/
+       └─ aiHandler.js (Gemini API integration & retry logic)
+
 ```
 
 ### Frontend
@@ -89,151 +82,52 @@ backend/
 ```
 frontend/
  └─ src/
-    ├─ pages/
     ├─ components/
-    ├─ context/
-    ├─ api/
-    └─ App.jsx
-```
-
----
-
-## 🔐 API Endpoints
-
-### Auth
+    │  ├─ PageLoader.jsx (Context-aware switch loader)
+    │  └─ AILoadingScreen.jsx (Gemini-specific grading screen)
+    ├─ pages/
+    │  └─ Results.jsx (Detailed feedback UI)
 
 ```
-POST   /api/auth/register
-POST   /api/auth/login
-GET    /api/auth/profile
-```
-
-### Questions
-
-```
-POST   /api/questions        (Admin only)
-GET    /api/questions
-```
-
-### Practice Sessions
-
-```
-POST   /api/sessions/start
-POST   /api/sessions/:id/submit
-```
-
-### Reports & Analytics
-
-```
-GET    /api/reports/progress
-GET    /api/reports/session/:id
-```
-
-### Bookmarks
-
-```
-POST   /api/bookmarks
-GET    /api/bookmarks
-```
-
----
-
-## 🧠 Evaluation Logic (Important)
-
-Answers are evaluated using **keyword matching**:
-
-* Each question contains predefined keywords
-* If **≥ 50% keywords match**, answer is marked correct
-* Topic-wise stats are calculated automatically
-
-This simulates **subjective interview answers**, not MCQs.
-
----
-
-## 📊 Dashboard Analytics Explained
-
-* **Accuracy** = (Correct Answers / Total Answers) × 100
-* **Weak Topics** = Accuracy < 60%
-* **Strong Topics** = Highest accuracy among topics
-* **Progress Bars** reflect topic performance visually
 
 ---
 
 ## ⚙️ Environment Variables
 
-Create a `.env` file in backend root:
+Your `.env` now requires the Gemini API Key:
 
 ```env
 PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_secret_key
+MONGO_URI=your_mongodb_uri
+JWT_SECRET=your_jwt_secret
+GEMINI_API_KEY=your_google_ai_key
+
 ```
 
 ---
 
-## ▶️ Run Locally
+## 📊 Evaluation Logic 2.0
 
-### Backend
-
-```bash
-cd backend
-npm install
-node src/server.js
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
+| Question Type | Evaluation Method | Result Speed |
+| --- | --- | --- |
+| **MCQ** | Local Index Comparison | Instant |
+| **Short Answer** | Gemini 1.5 Flash Analysis | 2 - 5 Seconds |
 
 ---
 
-## 🧪 Database Models
+## 🏆 Why This Version Matters
 
-* **User**
-* **Question**
-* **Session**
-* **Bookmark**
+This project demonstrates **AI Orchestration**:
 
-MongoDB references are used with proper population for analytics.
-
----
-
-## 🏆 Why This Project Matters
-
-This project demonstrates:
-
-* Clean backend architecture
-* Real-world REST API design
-* Data analytics & aggregation
-* Secure authentication flows
-* Thoughtful UX & product thinking
-* Scalable code organization
-
-It closely resembles **real interview prep platforms** like LeetCode or InterviewBit.
+1. It knows when *not* to use AI (saving costs/latency on MCQs).
+2. It handles **asynchronous AI feedback** with a high-end UI/UX.
+3. It uses **Prompt Engineering** to ensure the AI returns structured JSON that the frontend can parse reliably.
 
 ---
 
-## 🚀 Future Enhancements
+### 👨‍💻 Author
 
-* 📈 Charts using Recharts
-* ⏱ Timed practice mode
-* 📜 Session history page
-* 🧠 Answer keyword feedback UI
-* 🏆 Skill-level badges
-* 🌐 Deployment (Render + Vercel)
+**MD Ayan Badar** *Full-Stack Engineer & AI Integration Specialist*
 
 ---
-
-## 👨‍💻 Author
-
-**Ayan Badar**
-BTech Computer Science
-Backend & Full-Stack Developer
-
----
-
 
