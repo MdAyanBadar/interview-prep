@@ -8,34 +8,99 @@ import {
 } from "lucide-react";
 import PageLoader from "../components/PageLoader";
 
+// Helper function to ensure we always have an array
+const ensureArray = (value) => {
+  return Array.isArray(value) ? value : [];
+};
+
+// Helper function to safely get numeric value
+const safeNumber = (value, defaultValue = 0) => {
+  const num = typeof value === 'number' ? value : parseInt(value, 10);
+  return isNaN(num) ? defaultValue : num;
+};
+
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     getProgress()
-      .then(res => setStats(res.data))
-      .catch(() => console.error("Failed to load dashboard data"))
+      .then((res) => {
+        // Validate response structure
+        if (res && res.data && typeof res.data === 'object') {
+          // Ensure topicStats is always an array
+          const validatedData = {
+            totalSessions: safeNumber(res.data.totalSessions, 0),
+            totalQuestions: safeNumber(res.data.totalQuestions, 0),
+            accuracy: safeNumber(res.data.accuracy, 0),
+            trend: safeNumber(res.data.trend, 0),
+            topicStats: ensureArray(res.data.topicStats)
+          };
+          setStats(validatedData);
+          setError(null);
+        } else {
+          // Invalid response structure - set defaults
+          setStats({
+            totalSessions: 0,
+            totalQuestions: 0,
+            accuracy: 0,
+            trend: 0,
+            topicStats: []
+          });
+          setError("Invalid data format received");
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load dashboard data:", err);
+        // Set safe defaults on error
+        setStats({
+          totalSessions: 0,
+          totalQuestions: 0,
+          accuracy: 0,
+          trend: 0,
+          topicStats: []
+        });
+        setError(err?.response?.data?.message || "Failed to load dashboard data");
+      })
       .finally(() => setLoading(false));
   }, []);
 
-  const topicEntries = useMemo(
-    () => (stats?.topicStats ? stats.topicStats : []),
-    [stats]
-  );
+  // Safely extract topicStats with array validation
+  const topicEntries = useMemo(() => {
+    if (!stats || !stats.topicStats) return [];
+    return ensureArray(stats.topicStats);
+  }, [stats]);
 
-  const weakTopics = useMemo(
-    () => topicEntries.filter((topic) => topic.percentage < 60),
-    [topicEntries]
-  );
+  // Safely filter weak topics with array validation
+  const weakTopics = useMemo(() => {
+    const entries = ensureArray(topicEntries);
+    return entries.filter((topic) => {
+      if (!topic || typeof topic !== 'object') return false;
+      const percentage = safeNumber(topic.percentage, 0);
+      return percentage < 60;
+    });
+  }, [topicEntries]);
 
+  // Safely get strongest topic
   const strongestTopic = useMemo(() => {
-    if (!topicEntries.length) return null;
-    return topicEntries[0];
+    const entries = ensureArray(topicEntries);
+    if (entries.length === 0) return null;
+    const first = entries[0];
+    return first && typeof first === 'object' ? first : null;
   }, [topicEntries]);
 
   if (loading) return <PageLoader loadingKey="dashboard"/>;
+
+  // Safe defaults if stats is null
+  const safeStats = stats || {
+    totalSessions: 0,
+    totalQuestions: 0,
+    accuracy: 0,
+    trend: 0,
+    topicStats: []
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 pb-16">
@@ -72,12 +137,19 @@ export default function Dashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 space-y-10">
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-red-800 text-sm font-medium">
+            ⚠️ {error}
+          </div>
+        )}
+
         {/* --- TOP STATS --- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard 
             icon={<BookOpen className="text-indigo-600" />} 
             title="Total Sessions" 
-            value={stats.totalSessions} 
+            value={safeStats.totalSessions} 
             subtitle="Practice rounds completed"
             bgColor="bg-indigo-50"
             iconBg="bg-indigo-100"
@@ -85,7 +157,7 @@ export default function Dashboard() {
           <StatCard 
             icon={<Target className="text-purple-600" />} 
             title="Questions Answered" 
-            value={stats.totalQuestions} 
+            value={safeStats.totalQuestions} 
             subtitle="Lifetime effort"
             bgColor="bg-purple-50"
             iconBg="bg-purple-100"
@@ -93,9 +165,9 @@ export default function Dashboard() {
           <StatCard 
             icon={<TrendingUp className="text-emerald-600" />} 
             title="Overall Accuracy" 
-            value={`${stats.accuracy}%`} 
-            trend={stats.trend}
-            subtitle={stats.accuracy >= 70 ? "Above average" : "Keep practicing"}
+            value={`${safeStats.accuracy}%`} 
+            trend={safeStats.trend}
+            subtitle={safeStats.accuracy >= 70 ? "Above average" : "Keep practicing"}
             bgColor="bg-emerald-50"
             iconBg="bg-emerald-100"
           />
@@ -123,9 +195,20 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-6">
-                {topicEntries.map((topicData, idx) => (
-                  <TopicRow key={topicData.name} topic={topicData.name} data={topicData} index={idx} />
-                ))}
+                {ensureArray(topicEntries).map((topicData, idx) => {
+                  // Validate topicData structure before rendering
+                  if (!topicData || typeof topicData !== 'object' || !topicData.name) {
+                    return null;
+                  }
+                  return (
+                    <TopicRow 
+                      key={topicData.name || `topic-${idx}`} 
+                      topic={topicData.name} 
+                      data={topicData} 
+                      index={idx} 
+                    />
+                  );
+                })}
               </div>
             )}
           </div>
@@ -133,7 +216,7 @@ export default function Dashboard() {
           {/* --- RIGHT: INSIGHTS & ACTIONS --- */}
           <div className="space-y-6">
             {/* Action Card: Weak Topic */}
-            {weakTopics.length > 0 && (
+            {Array.isArray(weakTopics) && weakTopics.length > 0 && weakTopics[0] && weakTopics[0].name && (
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-3xl p-7 shadow-lg shadow-amber-100/50 hover:shadow-xl hover:shadow-amber-100/60 transition-all hover:-translate-y-1">
                 <div className="flex items-center gap-3 text-amber-900 mb-4">
                   <div className="p-2 bg-amber-200 rounded-xl">
@@ -142,7 +225,7 @@ export default function Dashboard() {
                   <h3 className="font-bold text-lg">Focus Needed</h3>
                 </div>
                 <p className="text-amber-800 text-sm mb-5 leading-relaxed">
-                  Your accuracy in <span className="font-bold text-amber-900">{weakTopics[0].name}</span> is currently <span className="font-bold">{weakTopics[0].percentage}%</span>. Let's improve it together.
+                  Your accuracy in <span className="font-bold text-amber-900">{weakTopics[0].name}</span> is currently <span className="font-bold">{safeNumber(weakTopics[0].percentage, 0)}%</span>. Let's improve it together.
                 </p>
                 <button 
                   onClick={() => navigate("/practice/start", { state: { focusTopic: weakTopics[0].name } })}
@@ -155,7 +238,7 @@ export default function Dashboard() {
             )}
 
             {/* Achievement Card: Strong Topic */}
-            {strongestTopic && (
+            {strongestTopic && strongestTopic.name && (
               <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-3xl p-7 shadow-lg shadow-emerald-100/50 hover:shadow-xl hover:shadow-emerald-100/60 transition-all hover:-translate-y-1">
                 <div className="flex items-center gap-3 text-emerald-900 mb-3">
                   <div className="p-2 bg-emerald-200 rounded-xl">
@@ -164,7 +247,7 @@ export default function Dashboard() {
                   <h3 className="font-bold text-lg">Peak Performance</h3>
                 </div>
                 <p className="text-emerald-800 text-sm leading-relaxed">
-                  You're crushing it in <span className="font-bold text-emerald-900">{strongestTopic.name}</span> with <span className="font-bold">{strongestTopic.percentage}%</span> accuracy! 
+                  You're crushing it in <span className="font-bold text-emerald-900">{strongestTopic.name}</span> with <span className="font-bold">{safeNumber(strongestTopic.percentage, 0)}%</span> accuracy! 
                   <span className="block mt-2">Keep up the excellent work! 🎯</span>
                 </p>
               </div>
@@ -192,7 +275,8 @@ export default function Dashboard() {
 // --- SUB-COMPONENTS ---
 
 function StatCard({ icon, title, value, subtitle, trend, bgColor, iconBg }) {
-  const isPositive = trend > 0;
+  const safeTrend = safeNumber(trend, 0);
+  const isPositive = safeTrend > 0;
 
   return (
     <div className={`${bgColor} backdrop-blur-sm p-7 rounded-3xl shadow-xl shadow-slate-200/50 border-2 border-white/60 flex items-start gap-5 hover:shadow-2xl hover:shadow-slate-200/60 transition-all hover:-translate-y-1 group`}>
@@ -203,12 +287,12 @@ function StatCard({ icon, title, value, subtitle, trend, bgColor, iconBg }) {
         <div className="flex justify-between items-start">
           <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">{title}</p>
           
-          {trend !== undefined && trend !== 0 && (
+          {safeTrend !== 0 && (
             <span className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
               isPositive ? 'bg-emerald-200 text-emerald-800' : 'bg-red-200 text-red-800'
             }`}>
               {isPositive ? <TrendingUp size={12}/> : <TrendingDown size={12}/>} 
-              {Math.abs(trend)}%
+              {Math.abs(safeTrend)}%
             </span>
           )}
         </div>
@@ -220,16 +304,20 @@ function StatCard({ icon, title, value, subtitle, trend, bgColor, iconBg }) {
 }
 
 function TopicRow({ topic, data, index }) {
-  const percent = data.percentage;
+  // Safely extract values with defaults
+  const percent = safeNumber(data?.percentage, 0);
+  const correct = safeNumber(data?.correct, 0);
+  const total = safeNumber(data?.total, 0);
+  const topicName = topic || "Unknown Topic";
   
   return (
     <div className="group hover:bg-slate-50 p-4 rounded-2xl transition-all -mx-4">
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-3">
           <span className="flex items-center justify-center w-8 h-8 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-bold group-hover:bg-indigo-200 transition-colors">
-            {index + 1}
+            {safeNumber(index, 0) + 1}
           </span>
-          <span className="font-bold text-slate-800 text-lg">{topic}</span>
+          <span className="font-bold text-slate-800 text-lg">{topicName}</span>
         </div>
         <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${
           percent >= 70 ? 'bg-emerald-100 text-emerald-700' : 
@@ -246,11 +334,11 @@ function TopicRow({ topic, data, index }) {
             percent >= 40 ? "bg-gradient-to-r from-amber-400 to-amber-500" : 
             "bg-gradient-to-r from-red-400 to-red-500"
           }`}
-          style={{ width: `${percent}%` }}
+          style={{ width: `${Math.min(Math.max(percent, 0), 100)}%` }}
         />
       </div>
       <div className="flex justify-between items-center mt-2 text-xs text-slate-500">
-        <span>{data.correct} of {data.total} correct</span>
+        <span>{correct} of {total} correct</span>
         <span className="font-medium">
           {percent >= 70 ? '🎯 Excellent' : percent >= 40 ? '📈 Improving' : '💪 Keep going'}
         </span>
