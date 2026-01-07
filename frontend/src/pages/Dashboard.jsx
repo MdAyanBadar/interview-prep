@@ -13,7 +13,6 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  /* ---------- Derived Analytics ---------- */
   const topicEntries = useMemo(
     () => (stats ? Object.entries(stats.topicStats) : []),
     [stats]
@@ -59,7 +58,6 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-8">
-      {/* ---------- Header ---------- */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">
@@ -93,7 +91,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ---------- Stats Cards ---------- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="Total Sessions"
@@ -166,7 +163,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* ---------- Weak Topics ---------- */}
       {weakTopics.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-6">
           <h3 className="font-semibold text-red-700 mb-2">
@@ -179,8 +175,6 @@ export default function Dashboard() {
           </ul>
         </div>
       )}
-
-      {/* ---------- Strongest Topic ---------- */}
       {strongestTopic && (
         <div className="bg-green-50 border border-green-200 rounded-xl p-6">
           <h3 className="font-semibold text-green-700 mb-2">
@@ -195,7 +189,6 @@ export default function Dashboard() {
   );
 }
 
-/* ---------- Reusable Stat Card ---------- */
 function StatCard({ title, value, color }) {
   const colors = {
     indigo: "from-indigo-500 to-indigo-600",

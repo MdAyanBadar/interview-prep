@@ -9,9 +9,30 @@ const bookmarkRoutes = require("./routes/bookmarkRoutes");
 
 const app = express();
 
-app.use(cors());
+// --- IMPROVED CORS ---
+// This allows your specific Vercel URL and local testing
+const allowedOrigins = [
+  "https://interview-prep-b9m7.vercel.app",
+  "http://localhost:5173", // Vite default
+  "http://localhost:3000"  // Create React App default
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/sessions", sessionRoutes); 
